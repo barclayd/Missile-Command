@@ -1,5 +1,6 @@
 import spgl
 import math
+import random
 
 
 # Classes
@@ -8,7 +9,18 @@ class MissileCommand(spgl.Game):
         spgl.Game.__init__(self, screen_width, screen_height, background_colour, title, splash_time)
 
     def click(self, x, y):
-        player_missile.set_target(x, y)
+        closest_missile = None
+        closest_missile_distance = 100000
+        for player_missile in player_missiles:
+            if player_missile.state == 'ready':
+                a = player_missile.xcor()-x
+                b = player_missile.ycor()-y
+                distance = math.sqrt((a**2) + (b**2))
+                if distance < closest_missile_distance:
+                    closest_missile = player_missile
+                    closest_missile_distance = distance
+        if closest_missile:
+            closest_missile.set_target(x, y)
 
 
 class City(spgl.Sprite):
@@ -104,7 +116,7 @@ class EnemyMissile(spgl.Sprite):
         spgl.Sprite.__init__(self, shape, color, x, y)
         self.dx = 0
         self.dy = 0
-        self.speed = 2
+        self.speed = 4
         self.size = 0.2
         self.shapesize(self.size, self.size, 0)
         self.pendown()
@@ -158,7 +170,7 @@ class EnemyMissile(spgl.Sprite):
             self.explode()
 
 
-# Functions
+# functions
 def check_collision(missile, target, targets):
     # check if missile is exploding
     if missile.state == 'explode':
@@ -168,25 +180,41 @@ def check_collision(missile, target, targets):
             targets.remove(target)
 
 
-# Initial Game setup
+# Game set up and scoring
 # show hide/splash screen with 0, default is 5
 game = MissileCommand(800, 600, "black", "Missile Command", 0)
 game.score = 0
+
 # Sprites
 
-city1 = City("square", "green", -300, -250)
+cities = []
+silos = []
+player_missiles = []
+enemy_missiles = []
 
-silo1 = Silo("square", "blue", 0, -200)
+for i in range(6):
+    cities.append(City("square", "green", -250 + (i * 100), -250))
 
-player_missile1 = PlayerMissile("circle", "white", 0, -250)
+for i in range(3):
+    silos.append(Silo("square", "blue", -350 + (i * 350), -225))
 
-enemy_missile1 = EnemyMissile("circle", "red", 0, 250)
-enemy_missile1.set_target(city1)
+for i in range(30):
+    if i < 10:
+        x = -350
+    elif i < 20:
+        x = 0
+    else:
+        x = 350
 
-cities = [city1]
-silos = [silo1]
-player_missiles = [player_missile1]
-enemy_missiles = [enemy_missile1]
+    player_missiles.append(PlayerMissile("circle", "white", x, -225))
+
+for i in range(10):
+    enemy_missiles.append(EnemyMissile("circle", "red", random.randint(-450, 400), random.randint(400, 800)))
+
+for enemy_missile in enemy_missiles:
+    # if random.randint(0, 10) > 5:
+    enemy_missile.set_target(random.choice(cities))
+
 
 # scoring
 game_status = spgl.Label("Score: {}  Cities: {}  Silos: {}", "white", -300, 280)
